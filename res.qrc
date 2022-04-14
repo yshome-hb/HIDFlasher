@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>res/icon_err.png</file>
+        <file>res/icon_ok.png</file>
+        <file>res/default.txt</file>
+    </qresource>
+</RCC>
