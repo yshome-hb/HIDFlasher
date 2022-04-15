@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>853</width>
-    <height>723</height>
+    <width>444</width>
+    <height>255</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -17,519 +17,65 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>USB HID test tool</string>
+   <string>USB HID flasher</string>
   </property>
-  <widget class="QWidget" name="centralwidget">
+  <widget class="QGroupBox" name="groupBox">
    <property name="sizePolicy">
     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout_2">
+   <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <property name="sizeConstraint">
-       <enum>QLayout::SetDefaultConstraint</enum>
-      </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QLabel" name="lUsbVid">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>26</height>
-         </size>
-        </property>
+       <widget class="QLabel" name="fileLabel">
         <property name="text">
-         <string>VID:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         <string>文件路径：</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QTextEdit" name="teUsbVid">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+       <widget class="QLineEdit" name="filePath"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="fileBrowse">
+        <property name="text">
+         <string>浏览..</string>
         </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>50</width>
-          <height>26</height>
-         </size>
-        </property>
-        <property name="acceptRichText">
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="transButton">
+        <property name="enabled">
          <bool>false</bool>
         </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer_4">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>10</width>
-          <height>5</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QLabel" name="lUsbPid">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>26</height>
-         </size>
-        </property>
         <property name="text">
-         <string>PID:</string>
+         <string>开始</string>
         </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QTextEdit" name="teUsbPid">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>50</width>
-          <height>26</height>
-         </size>
-        </property>
-        <property name="acceptRichText">
+        <property name="autoDefault">
          <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer_3">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>10</width>
-          <height>5</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QLabel" name="lUsbSerial">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>26</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Serial:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QTextEdit" name="teUsbSerial">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>120</width>
-          <height>26</height>
-         </size>
-        </property>
-        <property name="tabStopWidth">
-         <number>80</number>
-        </property>
-        <property name="tabStopDistance">
-         <double>80.000000000000000</double>
-        </property>
-        <property name="acceptRichText">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::MinimumExpanding</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>10</width>
-          <height>10</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QLabel" name="lUsbTimeout">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>26</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Timeout [ms]:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QSpinBox" name="sbUsbTimeout">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>60</width>
-          <height>26</height>
-         </size>
-        </property>
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>9999</number>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>10</width>
-          <height>5</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QLabel" name="lPacketMul">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>26</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Num of packets:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QSpinBox" name="sbUsbTimeout_2">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>60</width>
-          <height>26</height>
-         </size>
-        </property>
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>9999</number>
         </property>
        </widget>
       </item>
      </layout>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <property name="sizeConstraint">
-       <enum>QLayout::SetDefaultConstraint</enum>
-      </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
-       <widget class="QTabWidget" name="twRxTx">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+       <widget class="QLabel" name="transLabel">
+        <property name="text">
+         <string>传输进度：</string>
         </property>
-        <property name="currentIndex">
-         <number>0</number>
-        </property>
-        <widget class="QWidget" name="tabTx">
-         <attribute name="title">
-          <string>TX packet</string>
-         </attribute>
-         <layout class="QHBoxLayout" name="horizontalLayout_3">
-          <item>
-           <widget class="QTreeView" name="viewTx">
-            <property name="alternatingRowColors">
-             <bool>true</bool>
-            </property>
-            <property name="selectionBehavior">
-             <enum>QAbstractItemView::SelectItems</enum>
-            </property>
-            <property name="horizontalScrollMode">
-             <enum>QAbstractItemView::ScrollPerPixel</enum>
-            </property>
-            <property name="animated">
-             <bool>false</bool>
-            </property>
-            <property name="allColumnsShowFocus">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-        <widget class="QWidget" name="tabRx">
-         <attribute name="title">
-          <string>RX packet</string>
-         </attribute>
-         <layout class="QHBoxLayout" name="horizontalLayout_4">
-          <item>
-           <widget class="QTreeView" name="viewRx">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="alternatingRowColors">
-             <bool>true</bool>
-            </property>
-            <property name="selectionBehavior">
-             <enum>QAbstractItemView::SelectItems</enum>
-            </property>
-            <property name="horizontalScrollMode">
-             <enum>QAbstractItemView::ScrollPerPixel</enum>
-            </property>
-            <property name="animated">
-             <bool>false</bool>
-            </property>
-            <property name="allColumnsShowFocus">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
        </widget>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <spacer name="verticalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Fixed</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>22</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="cbTxRxSame">
-          <property name="text">
-           <string>Different Rx/Tx data</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="cbUseReports">
-          <property name="text">
-           <string>Use report ID field</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="cbTrailingBytes">
-          <property name="text">
-           <string>Add trailing bytes</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="cbBlockingMode">
-          <property name="text">
-           <string>Blocking mode</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="cbWaitForAns">
-          <property name="text">
-           <string>Wait for answer</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="cbRetransmit">
-          <property name="text">
-           <string>Retransmit on error</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="cbRawLogMode">
-          <property name="text">
-           <string>Raw logging</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="cbStructuredView">
-          <property name="text">
-           <string>Structured view</string>
-          </property>
-          <property name="checked">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pbOpen">
-          <property name="text">
-           <string>Open</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pbWriteCmd">
-          <property name="text">
-           <string>Write</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pbRead">
-          <property name="text">
-           <string>Read</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pbStopWait">
-          <property name="text">
-           <string>Stop waiting</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pbSetLogfile">
-          <property name="text">
-           <string>Set log file</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pbWriteFile">
-          <property name="text">
-           <string>Send binary file</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="verticalSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-       </layout>
+       <widget class="QProgressBar" name="transProgress">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>
@@ -540,8 +86,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>853</width>
-     <height>26</height>
+     <width>444</width>
+     <height>22</height>
     </rect>
    </property>
   </widget>

@@ -2,10 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QLabel>
-#include <QTreeView>
+#include "filetransmit.h"
 #include "usbhiddevice.h"
-#include "treemodel.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -16,29 +14,19 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    void updateActions();
-    void insertChild();
-    bool insertColumn();
-    void insertRow();
-    bool removeColumn();
-    void removeRow();
+
+private slots:
+    void on_fileBrowse_clicked(void);
+    void on_transButton_clicked(void);
 
 private:
     Ui::MainWindow *ui;
-    QLabel *lStatusTitle;
-    QLabel *lStatusValue;
-    QLabel *lMsgCntValue;
-    USBHIDDevice* usbHid;
+    //USBHIDDevice* usbHid;
+    FileTransmit *fileTransmit;
 
-    QTreeView *view;
-    TreeModel *model;
-
-    QAction *insertRowAction;
-    QAction *removeRowAction;
-    QAction *insertColumnAction;
-    QAction *removeColumnAction;
-    QAction *insertChildAction;
+    bool transButtonStatus;
 };
+
 #endif // MAINWINDOW_H

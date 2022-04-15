@@ -18,14 +18,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     src/main.cpp \
     src/mainwindow.cpp \
-    src/treeitem.cpp \
-    src/treemodel.cpp \
+    src/filetransmit.cpp\
     src/usbhiddevice.cpp
 
 HEADERS += \
     src/mainwindow.h \
-    src/treeitem.h \
-    src/treemodel.h \
+    src/filetransmit.h\
     src/usbhiddevice.h
 
 FORMS += \
