@@ -18,14 +18,16 @@ public:
     ~MainWindow();
 
 private slots:
+    void on_connectButton_clicked(void);
     void on_fileBrowse_clicked(void);
     void on_transButton_clicked(void);
+    void transmitStatus(int status);
+    void transmitProgress(int progress);
 
 private:
     Ui::MainWindow *ui;
-    //USBHIDDevice* usbHid;
+    USBHIDDevice* usbHid;
     FileTransmit *fileTransmit;
-
     bool transButtonStatus;
 };
 

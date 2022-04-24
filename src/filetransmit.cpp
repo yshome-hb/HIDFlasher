@@ -2,16 +2,44 @@
 #include "filetransmit.h"
 #include <QDebug>
 
-#define READ_TIME_OUT   (10)
-#define WRITE_TIME_OUT  (100)
+#define TRANS_TIME_OUT  (10)
+
+static int QDebug_hex_dump(uint8_t *data, int size)
+{
+    QString strTemp;
+    for(int i = 0; i < size; i++)
+    {
+        strTemp += QString().sprintf("%02x ", data[i]);
+    }
+    qDebug() << strTemp;
+    return size;
+}
+
+static uint16_t crc16(uint8_t *p, int len)
+{
+	uint16_t crc16_poly[2] = {0, 0xA001}; 
+    uint16_t crc = 0xffff;
+
+    for(int i = len; i > 0; i--)
+    {
+        uint8_t ds = *p++;
+        for(int j = 0; j < 8; j++)
+        {
+            crc = (crc >> 1) ^ crc16_poly[(crc ^ ds ) & 1];
+            ds = ds >> 1;
+        }
+    }
+    return crc;
+}
 
 FileTransmit::FileTransmit(QObject *parent) :
     file(new QFile),
-    readTimer(new QTimer),
-    writeTimer(new QTimer)
+    transmitTimer(new QTimer)
 {
-    connect(readTimer, SIGNAL(timeout()), this, SLOT(readTimeOut()));
-    connect(writeTimer, SIGNAL(timeout()), this, SLOT(writeTimeOut()));
+    fileSize = 0;
+    fileCount = 0;
+    usbHid = NULL;
+    connect(transmitTimer, SIGNAL(timeout()), this, SLOT(transmitTimeOut()));
 }
 
 FileTransmit::~FileTransmit()
@@ -21,22 +49,65 @@ FileTransmit::~FileTransmit()
     this->wait();
 
     delete file;
-    delete readTimer;
-    delete writeTimer;
+    delete transmitTimer;
 }
 
 void FileTransmit::run()
 {
-    while(1)
+    uint8_t sendBuffer[32] = {0xA5, 0x0B, 0x01, 0x09, 0x05, 0x04, 0x52, 0x28, 0x00, 0x01, 0xFF};
+    uint8_t recvBuffer[32];
+    int recvLength = sizeof(recvBuffer);
+    
+    if(usbHid->transmitData(sendBuffer, sizeof(sendBuffer), recvBuffer, &recvLength, -1) < 0)
     {
-        sleep(1);
-    qDebug() << "thread";
-        if(isInterruptionRequested())
-        {
-           break;
-        }
+        goto trans_fail;
     }
-    //emit runDone();
+
+    if(recvLength != 32 && recvBuffer[2] != 0x01)
+    {
+        goto trans_fail;
+    }
+
+    while(!isInterruptionRequested() && fileCount < fileSize)
+    {
+        memset(sendBuffer+11, 0xFF, 16);
+        fileCount += file->read((char *)(sendBuffer+11), 16);
+        sendBuffer[4] = 20 + 3;
+        sendBuffer[3] = sendBuffer[4] + 4;
+        sendBuffer[1] = sendBuffer[3] + 2;
+        sendBuffer[9] = recvBuffer[9];
+        sendBuffer[10] = recvBuffer[10];
+        
+        uint16_t data_crc = crc16(sendBuffer+9, 18);
+        sendBuffer[27] = data_crc & 0xFF;
+        sendBuffer[28] = (data_crc >> 8) & 0xFF;
+
+        recvLength = sizeof(recvBuffer);
+        if(usbHid->transmitData(sendBuffer, sizeof(sendBuffer), recvBuffer, &recvLength, -1) < 0)
+        {
+            goto trans_fail;
+        }
+ 
+        // qDebug() << "recvLength "<<QString("0x%1").arg(recvLength);
+        // QDebug_hex_dump(recvBuffer, 32);
+
+        if(recvLength != 32 && recvBuffer[2] != 0x01)
+        {
+            goto trans_fail;
+        }
+
+        transmitProgress(fileCount * 100 / fileSize);
+    }
+
+    memset(sendBuffer+9, 0xFF, 18);
+    sendBuffer[9] = 0x02;
+    usbHid->transmitData(sendBuffer, sizeof(sendBuffer), recvBuffer, &recvLength, -1);
+
+trans_fail:
+    file->close();
+    transmitStatus(fileCount >= fileSize);
+    fileSize = 0;
+    fileCount = 0;    
 }
 
 void FileTransmit::setFileName(const QString &name)
@@ -44,171 +115,34 @@ void FileTransmit::setFileName(const QString &name)
     file->setFileName(name);
 }
 
-bool FileTransmit::startTransmit()
+int FileTransmit::isTransmitting()
 {
-    if(file->open(QFIle::ReadOnly) == false)
+    return fileSize - fileCount;
+}
+
+bool FileTransmit::startTransmit(USBHIDDevice* hid)
+{
+    if(file->open(QFile::ReadOnly) == false)
         return false;
 
     QFileInfo fileInfo(*file);
 
     fileSize = fileInfo.size();
-    
+    fileCount = 0;
+    usbHid = hid;
+
     this->start();
-    // progress = 0;
-    // status   = StatusEstablish;
+    //transmitTimer->start(TRANS_TIME_OUT);
     return true;
 }
 
 void FileTransmit::stopTransmit()
 {
     this->requestInterruption();
-    // file->close();
-    // abort();
-    // status = StatusAbort;
-    // writeTimer->start(WRITE_TIME_OUT);
 }
 
-int FileTransmit::getTransmitProgress()
+void FileTransmit::transmitTimeOut()
 {
-    return progress;
-}
-
-int FileTransmit::getTransmitStatus()
-{
-    return status;
-}
-
-void FileTransmit::readTimeOut()
-{
-    readTimer->stop();
-
-    //transmit();
-
-    // if((status == StatusEstablish) || (status == StatusTransmit))
-    // {
-    //     readTimer->start(READ_TIME_OUT);
-    // }
-}
-
-void FileTransmit::writeTimeOut()
-{
-    // writeTimer->stop();
-    // serialPort->close();
-    // transmitStatus(status);
-}
-
-int FileTransmit::callback(int status, uint8_t *buff, uint32_t *len)
-{
-    // switch(status)
-    // {
-    //     case StatusEstablish:
-    //     {
-    //         if(file->open(QFile::ReadOnly) == true)
-    //         {
-    //             QFileInfo fileInfo(*file);
-
-    //             fileSize  = fileInfo.size();
-    //             fileCount = 0;
-
-    //             strcpy((char *)buff, fileInfo.fileName().toLocal8Bit().data());
-    //             strcpy((char *)buff + fileInfo.fileName().toLocal8Bit().size() + 1, QByteArray::number(fileInfo.size()).data());
-
-    //             *len = YMODEM_PACKET_SIZE;
-
-    //             FileTransmit::status = StatusEstablish;
-
-    //             transmitStatus(StatusEstablish);
-
-    //             return CodeAck;
-    //         }
-    //         else
-    //         {
-    //             YmodemFileTransmit::status = StatusError;
-
-    //             writeTimer->start(WRITE_TIME_OUT);
-
-    //             return CodeCan;
-    //         }
-    //     }
-
-    //     case StatusTransmit:
-    //     {
-    //         if(fileSize != fileCount)
-    //         {
-    //             if((fileSize - fileCount) > YMODEM_PACKET_SIZE)
-    //             {
-    //                 fileCount += file->read((char *)buff, YMODEM_PACKET_1K_SIZE);
-
-    //                 *len = YMODEM_PACKET_1K_SIZE;
-    //             }
-    //             else
-    //             {
-    //                 fileCount += file->read((char *)buff, YMODEM_PACKET_SIZE);
-
-    //                 *len = YMODEM_PACKET_SIZE;
-    //             }
-
-    //             progress = (int)(fileCount * 100 / fileSize);
-
-    //             YmodemFileTransmit::status = StatusTransmit;
-
-    //             transmitProgress(progress);
-    //             transmitStatus(StatusTransmit);
-
-    //             return CodeAck;
-    //         }
-    //         else
-    //         {
-    //             YmodemFileTransmit::status = StatusTransmit;
-
-    //             transmitStatus(StatusTransmit);
-
-    //             return CodeEot;
-    //         }
-    //     }
-
-    //     case StatusFinish:
-    //     {
-    //         file->close();
-
-    //         YmodemFileTransmit::status = StatusFinish;
-
-    //         writeTimer->start(WRITE_TIME_OUT);
-
-    //         return CodeAck;
-    //     }
-
-    //     case StatusAbort:
-    //     {
-    //         file->close();
-
-    //         YmodemFileTransmit::status = StatusAbort;
-
-    //         writeTimer->start(WRITE_TIME_OUT);
-
-    //         return CodeCan;
-    //     }
-
-    //     case StatusTimeout:
-    //     {
-    //         YmodemFileTransmit::status = StatusTimeout;
-
-    //         writeTimer->start(WRITE_TIME_OUT);
-
-    //         return CodeCan;
-    //     }
-
-    //     default:
-    //     {
-    //         file->close();
-
-    //         YmodemFileTransmit::status = StatusError;
-
-    //         writeTimer->start(WRITE_TIME_OUT);
-
-    //         return CodeCan;
-    //     }
-    // }
-    
-    return 0;
+    transmitTimer->stop();
+    stopTransmit();
 }

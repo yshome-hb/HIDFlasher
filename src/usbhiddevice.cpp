@@ -3,104 +3,66 @@
 
 QList<USBHIDDevice::DevInfo> USBHIDDevice::devList;
 
-USBHIDDevice::USBHIDDevice(QObject* parent, uint16_t vid, uint16_t pid, wchar_t* serial) : QObject(parent), asyncTimer(this)
+USBHIDDevice::USBHIDDevice(QObject* parent, uint16_t vid, uint16_t pid, wchar_t* serial) : QObject(parent)
 {
     hid_init();
-    _serial[0] = 0;
-    setDeviceParams(vid, pid, serial);
+    _path = NULL;
+    _vid = vid;
+    _pid = pid;
+    if (serial != NULL)
+       wcscpy(_serial, serial);
 
-    asyncTimer.setSingleShot(true);
-    asyncTimer.setTimerType(Qt::TimerType::CoarseTimer);
-    asyncTimer.setInterval(10);
-    connect(&asyncTimer, SIGNAL(timeout()), this, SLOT(updateMsgReceivedFlag()));
-
-    connectionTimer.setSingleShot(false);
-    connectionTimer.setTimerType(Qt::TimerType::CoarseTimer);
-    connectionTimer.setInterval(500);
-    connect(&connectionTimer, SIGNAL(timeout()), this, SLOT(updateConnStatusFlag()));
-
-    connectionTimer.start();
 }
 
-bool USBHIDDevice::enumerate(uint16_t vid, uint16_t pid)
+void USBHIDDevice::setUsage(uint16_t upage, uint16_t usage)
 {
-    bool status = false;
-    hid_device_info* devStrings = hid_enumerate(vid, pid);
-
-    if (devStrings != NULL)
-        status = true;
-
-    while(devStrings != NULL)
-    {
-        devList.push_back(DevInfo(devStrings));
-        devStrings = devStrings->next;
-    }
-    hid_free_enumeration(devStrings);
-
-    return status;
+    _usagePage = upage;
+    _usage = usage;
 }
 
-bool USBHIDDevice::checkDevConnected()
+bool USBHIDDevice::isConnected()
 {
-    wchar_t str[32];
-    bool result = false;
+    _path = NULL;
+    if(!enumerate(_vid, _pid))
+        return false;
 
-    if (activeDevice != NULL)
-        result = hid_get_product_string(activeDevice, str, 32) == 0;
-    else
-        result = enumerate(_vid, _pid);
-
-    if (result)
+    if(_usagePage == 0 && _usage == 0)
     {
-        if (wcslen(_serial) == 0)
-            return true;
-        else
-        {
-            hid_device* dev = hid_open(_vid, _pid, _serial);
-            if (dev != NULL)
-            {
-                hid_close(dev);
-                return true;
-            }
-            else return false;
-        }
+        USBHIDDevice::DevInfo devInfo = devList.at(0);
+        _path = devInfo.path.toUtf8().data();;
+        return true;
     }
-    else return false;
+
+    for(int i = 0; i < devList.size(); i++)
+    {
+        USBHIDDevice::DevInfo devInfo = devList.at(i);
+        if(_usagePage > 0 && _usagePage != devInfo.usagePage)
+            continue;
+
+        if(_usage > 0 && _usage != devInfo.usage)
+            continue;   
+
+        _path = devInfo.path.toUtf8().data();;
+        break;
+    }
+
+    return true;
 }
 
-bool USBHIDDevice::checkDevOpened()
+bool USBHIDDevice::isOpened()
 {
     return activeDevice != NULL;
 }
 
-void USBHIDDevice::enableDevConnEvent(bool enabled)
+bool USBHIDDevice::open()
 {
-    if (enabled)
-        connectionTimer.start();
-    else
-        connectionTimer.stop();
-}
-
-QList<USBHIDDevice::DevInfo>& USBHIDDevice::getDevList()
-{
-    return devList;
-}
-
-bool USBHIDDevice::open(bool blocking)
-{
-    if (wcslen(_serial) == 0)
-        activeDevice = hid_open(_vid, _pid, NULL);
-    else
+    if(_path != NULL)
+        activeDevice = hid_open_path(_path);
+    else if(wcslen(_serial) > 0)
         activeDevice = hid_open(_vid, _pid, _serial);
+    else
+        activeDevice = hid_open(_vid, _pid, NULL);
 
-    if (activeDevice)
-    {
-        if (!blocking)
-        {
-            hid_set_nonblocking(activeDevice, !blocking);
-            blockingMode = blocking;
-        }
-    }
     return activeDevice != NULL;
 }
 
@@ -113,98 +75,86 @@ void USBHIDDevice::close()
     }
 }
 
-void USBHIDDevice::read(uint8_t* data, uint16_t size)
+int USBHIDDevice::write(uint8_t* data, uint16_t size, uint8_t reportId)
 {
-    if (activeDevice)
+    if (activeDevice == NULL)
+        return -1;
+
+    outReportBuf[0] = reportId;
+    memcpy(outReportBuf + 1, data, size);
+    return hid_write(activeDevice, outReportBuf, 32);
+}
+
+int USBHIDDevice::read(uint8_t* data, uint16_t size, int timeout)
+{
+    if (activeDevice == NULL)
+        return -1;
+
+    return hid_read_timeout(activeDevice, data, size, timeout);
+}
+
+int USBHIDDevice::setFeature(uint8_t* data, uint16_t size, uint8_t reportId)
+{
+    if (activeDevice == NULL)
+        return -1;
+
+    outReportBuf[0] = reportId;
+    memcpy(outReportBuf + 1, data, size);
+    return hid_send_feature_report(activeDevice, outReportBuf, size + 1);
+}
+
+int USBHIDDevice::getFeature(uint8_t* data, uint16_t size, uint8_t reportId)
+{
+    if (activeDevice == NULL)
+        return -1;
+
+    inReportBuf[0] = reportId;
+    int ret = hid_get_feature_report(activeDevice, inReportBuf, size + 1);
+    if(ret > 0)
     {
-        if (blockingMode)
-            hid_read(activeDevice, data, size);
-        else
-        {
-            unblockingReadSize = size;
-            unblockingMsgReceived = hid_read(activeDevice, inReportBuf, size) > 0;
-            if (!unblockingMsgReceived)
-                asyncTimer.start();
-        }
+        memcpy(data, inReportBuf + 1, ret - 1);
     }
+    return (ret - 1);
 }
 
-void USBHIDDevice::write(uint8_t* data, uint16_t size, uint8_t reportId)
+int USBHIDDevice::transmitData(uint8_t *outData, int outLen, uint8_t *inData, int *inlen, int timeout)
 {
-    if (activeDevice)
+    if (activeDevice == NULL)
+        return -1;
+
+    outReportBuf[0] = 0;
+    memcpy(outReportBuf + 1, outData, outLen);
+    int ret = hid_write(activeDevice, outReportBuf, outLen);
+    if(ret < 0)
+        return ret;
+
+    ret = hid_read_timeout(activeDevice, inData, *inlen, timeout);
+    if(ret > 0)
+        *inlen = ret;
+
+    return ret;
+}
+
+bool USBHIDDevice::enumerate(uint16_t vid, uint16_t pid)
+{
+    bool status = false;
+    hid_device_info* devStrings = hid_enumerate(vid, pid);
+
+    if (devStrings != NULL)
+        status = true;
+
+    devList.clear();
+    while(devStrings != NULL)
     {
-        outReportBuf[0] = reportId;
-        memcpy(outReportBuf + 1, data, size);
-        hid_write(activeDevice, outReportBuf, size + 1);
+        devList.push_back(DevInfo(devStrings));
+        devStrings = devStrings->next;
     }
+    hid_free_enumeration(devStrings);
+
+    return status;
 }
 
-void USBHIDDevice::getFeature(uint8_t* data, uint16_t size, uint8_t reportId)
+QList<USBHIDDevice::DevInfo>& USBHIDDevice::getDevList()
 {
-    if (activeDevice)
-    {
-        inReportBuf[0] = reportId;
-        hid_get_feature_report(activeDevice, inReportBuf, size + 1);
-        if (blockingMode)
-            memcpy(data, inReportBuf + 1, size);
-    }
-}
-
-void USBHIDDevice::setFeature(uint8_t* data, uint16_t size, uint8_t reportId)
-{
-    if (activeDevice)
-    {
-        outReportBuf[0] = reportId;
-        memcpy(outReportBuf + 1, data, size);
-        hid_send_feature_report(activeDevice, outReportBuf, size + 1);
-    }
-}
-
-uint8_t* USBHIDDevice::getAsyncReceivedData()
-{
-    return inReportBuf;
-}
-
-void USBHIDDevice::setAsyncTimeout(uint32_t ms)
-{
-    asyncTimer.setInterval(ms);
-}
-
-void USBHIDDevice::setDeviceParams(uint16_t vid, uint16_t pid, wchar_t* serial)
-{
-    _vid = vid;
-    _pid = pid;
-    if (serial != NULL)
-       wcscpy(_serial, serial);
-}
-
-bool USBHIDDevice::isBusy()
-{
-    return false;
-}
-
-void USBHIDDevice::updateMsgReceivedFlag()
-{
-    if (!blockingMode && (unblockingReadSize != 0))
-    {
-        unblockingMsgReceived = hid_read(activeDevice, inReportBuf, unblockingReadSize) > 0;
-        if (unblockingMsgReceived)
-            emit asyncDataReady(inReportBuf, unblockingReadSize);
-        else if (unblockingCheckCnt++ < unblockingMaxChecks)
-                asyncTimer.start();
-    }
-}
-
-void USBHIDDevice::updateConnStatusFlag()
-{
-qDebug()<<"***************************************";
-
-
-
-    bool connected = checkDevConnected();
-    if (connStatus != connected)
-    {
-        connStatus = connected;
-        emit connectionChanged(connected);
-    }
+    return devList;
 }

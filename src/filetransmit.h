@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <QObject>
 #include <QThread>
+#include "usbhiddevice.h"
 
 class FileTransmit : public QThread
 {
@@ -16,11 +17,9 @@ public:
 
     void setFileName(const QString &name);
 
-    bool startTransmit();
+    int isTransmitting();
+    bool startTransmit(USBHIDDevice* hid = NULL);
     void stopTransmit();
-
-    int getTransmitProgress();
-    int getTransmitStatus();
 
 protected:
     void run();
@@ -30,21 +29,13 @@ signals:
     void transmitStatus(int status);
 
 private slots:
-    void readTimeOut();
-    void writeTimeOut();
+    void transmitTimeOut();
 
 private:
-    int callback(int status, uint8_t *buff, uint32_t *len);
+    QFile *file;
+    QTimer *transmitTimer;
+    USBHIDDevice* usbHid;
 
-    uint32_t read(uint8_t *buff, uint32_t len);
-    uint32_t write(uint8_t *buff, uint32_t len);
-
-    QFile       *file;
-    QTimer      *readTimer;
-    QTimer      *writeTimer;
-
-    int      progress;
-    int status;
     uint64_t fileSize;
     uint64_t fileCount;
 };

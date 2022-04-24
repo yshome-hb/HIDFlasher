@@ -14,59 +14,48 @@ MainWindow::MainWindow(QWidget *parent) :
 
     transButtonStatus = false;
 
-    // usbHid = new USBHIDDevice(this, 0000, 0000);
-    // USBHIDDevice::enumerate();
+    usbHid = new USBHIDDevice(this, 0x05ac, 0x0256);
+    usbHid->setUsage(0xFF60, 0x0061);
 
-    // insertRowAction = new QAction(this);
-    // insertRowAction->setObjectName(QString::fromUtf8("insertRowAction"));
-    // removeRowAction = new QAction(this);
-    // removeRowAction->setObjectName(QString::fromUtf8("removeRowAction"));
-    // insertColumnAction = new QAction(this);
-    // insertColumnAction->setObjectName(QString::fromUtf8("insertColumnAction"));
-    // removeColumnAction = new QAction(this);
-    // removeColumnAction->setObjectName(QString::fromUtf8("removeColumnAction"));
-    // insertChildAction = new QAction(this);
-    // insertChildAction->setObjectName(QString::fromUtf8("insertChildAction"));
+    connect(fileTransmit, SIGNAL(transmitProgress(int)), this, SLOT(transmitProgress(int)));
+    connect(fileTransmit, SIGNAL(transmitStatus(int)), this, SLOT(transmitStatus(int)));
+}
 
-    // insertRowAction->setShortcut(QCoreApplication::translate("MainWindow", "Ctrl+I, R", nullptr));
-    // removeRowAction->setShortcut(QCoreApplication::translate("MainWindow", "Ctrl+R, R", nullptr));
-    // insertColumnAction->setShortcut(QCoreApplication::translate("MainWindow", "Ctrl+I, C", nullptr));
-    // removeColumnAction->setShortcut(QCoreApplication::translate("MainWindow", "Ctrl+R, C", nullptr));
-    // insertChildAction->setShortcut(QCoreApplication::translate("MainWindow", "Ctrl+N", nullptr));
+void MainWindow::on_connectButton_clicked(void)
+{
+    if(!usbHid->isConnected())
+    {
+        QMessageBox::warning(this, u8"失败", u8"未发现设备！", u8"关闭");
+        return;
+    }
 
-    // const QStringList headers({tr("Title"), tr("Description")});
-    // QFile file(":/res/default.txt");
-    // file.open(QIODevice::ReadOnly);
-    // model = new TreeModel(headers, file.readAll());
-    // file.close();
+    if(!usbHid->open())
+    {
+        QMessageBox::warning(this, u8"失败", u8"设备打开失败", u8"关闭");
+        return;        
+    }
 
-    // ui->viewTx->setModel(model);
-    // for (int column = 0; column < model->columnCount(); ++column)
-    //     ui->viewTx->resizeColumnToContents(column);
+    int ret = 0;
+    uint8_t outData[32] = {0xA0};
+    uint8_t inData[32];
+    
+    ret = usbHid->write(outData, 32);
+    if(ret < 0)
+    {
+        usbHid->close();
+        QMessageBox::warning(this, u8"失败", u8"无法读取设备信息", u8"关闭");
+        return;  
+    }
 
-    // connect(ui->viewTx->selectionModel(), &QItemSelectionModel::selectionChanged,
-    //         this, &MainWindow::updateActions);
-    // connect(insertRowAction, &QAction::triggered, this, &MainWindow::insertRow);
-    // connect(insertColumnAction, &QAction::triggered, this, &MainWindow::insertColumn);
-    // connect(removeRowAction, &QAction::triggered, this, &MainWindow::removeRow);
-    // connect(removeColumnAction, &QAction::triggered, this, &MainWindow::removeColumn);
-    // connect(insertChildAction, &QAction::triggered, this, &MainWindow::insertChild);
+    ret = usbHid->read(inData, 32);
+    if((ret < 0) || (inData[0] != 0xA0))
+    {
+        usbHid->close();
+        QMessageBox::warning(this, u8"失败", u8"无法读取设备信息", u8"关闭");
+        return;  
+    }
 
-    // lStatusTitle = new QLabel(this);
-    // lStatusTitle->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
-    // lStatusTitle->setText("Last command status:");
-
-    // lStatusValue = new QLabel(this);
-    // lStatusValue->setPixmap(QPixmap(":/icon_ok.png", "PNG"));
-
-    // lMsgCntValue = new QLabel(this);
-    // lMsgCntValue->setText("Message count:     0");
-
-    // ui->statusbar->addPermanentWidget(lStatusTitle);
-    // ui->statusbar->addPermanentWidget(lStatusValue);
-    // ui->statusbar->addWidget(lMsgCntValue);
-
-
+    ui->devinfoLabel->setText((char *)inData+1);
 }
 
 void MainWindow::on_fileBrowse_clicked(void)
@@ -86,7 +75,7 @@ void MainWindow::on_transButton_clicked(void)
         qDebug() << "start";
 
         fileTransmit->setFileName(ui->filePath->text());
-        if(fileTransmit->startTransmit() == true)
+        if(fileTransmit->startTransmit(usbHid) == true)
         {
             transButtonStatus = true;
             ui->transButton->setText(u8"取消");
@@ -101,6 +90,27 @@ void MainWindow::on_transButton_clicked(void)
         transButtonStatus = false;
         ui->transButton->setText(u8"开始");
     }
+}
+
+void MainWindow::transmitProgress(int progress)
+{
+    ui->transProgress->setValue(progress);
+}
+
+void MainWindow::transmitStatus(int status)
+{
+    if(status)
+    {
+        QMessageBox::warning(this, u8"成功", u8"文件发送成功！", u8"关闭");
+    }
+    else
+    {
+        QMessageBox::warning(this, u8"失败", u8"文件发送失败！", u8"关闭");
+    }
+
+    ui->transProgress->setValue(0);
+    transButtonStatus = false;
+    ui->transButton->setText(u8"开始");
 }
 
 MainWindow::~MainWindow()
