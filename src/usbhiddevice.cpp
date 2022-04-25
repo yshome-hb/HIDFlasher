@@ -14,6 +14,14 @@ USBHIDDevice::USBHIDDevice(QObject* parent, uint16_t vid, uint16_t pid, wchar_t*
 
 }
 
+void USBHIDDevice::setParams(uint16_t vid, uint16_t pid, wchar_t* serial)
+{
+    _vid = vid;
+    _pid = pid;
+    if (serial != NULL)
+       wcscpy(_serial, serial);
+}
+
 void USBHIDDevice::setUsage(uint16_t upage, uint16_t usage)
 {
     _usagePage = upage;
@@ -117,12 +125,12 @@ int USBHIDDevice::getFeature(uint8_t* data, uint16_t size, uint8_t reportId)
     return (ret - 1);
 }
 
-int USBHIDDevice::transmitData(uint8_t *outData, int outLen, uint8_t *inData, int *inlen, int timeout)
+int USBHIDDevice::transmitData(uint8_t *outData, int outLen, uint8_t *inData, int *inlen, uint8_t reportId, int timeout)
 {
     if (activeDevice == NULL)
         return -1;
 
-    outReportBuf[0] = 0;
+    outReportBuf[0] = reportId;
     memcpy(outReportBuf + 1, outData, outLen);
     int ret = hid_write(activeDevice, outReportBuf, outLen);
     if(ret < 0)

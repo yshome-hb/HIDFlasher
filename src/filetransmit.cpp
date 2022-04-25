@@ -58,12 +58,12 @@ void FileTransmit::run()
     uint8_t recvBuffer[32];
     int recvLength = sizeof(recvBuffer);
     
-    if(usbHid->transmitData(sendBuffer, sizeof(sendBuffer), recvBuffer, &recvLength, -1) < 0)
+    if(usbHid->transmitData(sendBuffer, sizeof(sendBuffer), recvBuffer, &recvLength) < 0)
     {
         goto trans_fail;
     }
 
-    if(recvLength != 32 && recvBuffer[2] != 0x01)
+    if(recvLength != sizeof(recvBuffer) || recvBuffer[2] != 0x01)
     {
         goto trans_fail;
     }
@@ -83,7 +83,7 @@ void FileTransmit::run()
         sendBuffer[28] = (data_crc >> 8) & 0xFF;
 
         recvLength = sizeof(recvBuffer);
-        if(usbHid->transmitData(sendBuffer, sizeof(sendBuffer), recvBuffer, &recvLength, -1) < 0)
+        if(usbHid->transmitData(sendBuffer, sizeof(sendBuffer), recvBuffer, &recvLength) < 0)
         {
             goto trans_fail;
         }
@@ -91,7 +91,7 @@ void FileTransmit::run()
         // qDebug() << "recvLength "<<QString("0x%1").arg(recvLength);
         // QDebug_hex_dump(recvBuffer, 32);
 
-        if(recvLength != 32 && recvBuffer[2] != 0x01)
+        if(recvLength != sizeof(recvBuffer) || recvBuffer[2] != 0x01)
         {
             goto trans_fail;
         }
@@ -101,7 +101,7 @@ void FileTransmit::run()
 
     memset(sendBuffer+9, 0xFF, 18);
     sendBuffer[9] = 0x02;
-    usbHid->transmitData(sendBuffer, sizeof(sendBuffer), recvBuffer, &recvLength, -1);
+    usbHid->transmitData(sendBuffer, sizeof(sendBuffer), recvBuffer, &recvLength);
 
 trans_fail:
     file->close();
@@ -122,6 +122,9 @@ int FileTransmit::isTransmitting()
 
 bool FileTransmit::startTransmit(USBHIDDevice* hid)
 {
+    if(hid == NULL)
+        return false;
+
     if(file->open(QFile::ReadOnly) == false)
         return false;
 

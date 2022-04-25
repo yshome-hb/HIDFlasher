@@ -37,9 +37,10 @@ public:
         int interfaceNum;       // The USB interface which this logical device represents.
     };
 
-    USBHIDDevice(QObject* parent, uint16_t vid, uint16_t pid, wchar_t* serial = NULL);
+    USBHIDDevice(QObject* parent = 0, uint16_t vid = 0, uint16_t pid = 0, wchar_t* serial = NULL);
     virtual ~USBHIDDevice() {};
 
+    void setParams(uint16_t vid = 0, uint16_t pid = 0, wchar_t* serial = NULL);
     void setUsage(uint16_t upage, uint16_t usage);
     bool isConnected();
     bool isOpened();
@@ -50,7 +51,7 @@ public:
     int read(uint8_t* data, uint16_t size, int timeout = -1);
     int setFeature(uint8_t* data, uint16_t size, uint8_t reportId = 0);
     int getFeature(uint8_t* data, uint16_t size, uint8_t reportId = 0);
-    int transmitData(uint8_t *outData, int outLen, uint8_t *inData, int *inlen, int timeout = -1);
+    int transmitData(uint8_t *outData, int outLen, uint8_t *inData, int *inlen, uint8_t reportId = 0, int timeout = -1);
 
     static bool enumerate(uint16_t vid = 0, uint16_t pid = 0);
     static QList<DevInfo>& getDevList();
