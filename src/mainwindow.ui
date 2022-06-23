@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>444</width>
-    <height>255</height>
+    <width>505</width>
+    <height>334</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -39,7 +39,7 @@
       <item>
        <widget class="QLineEdit" name="vendorId">
         <property name="text">
-         <string>0x05ac</string>
+         <string>0x248a</string>
         </property>
        </widget>
       </item>
@@ -53,7 +53,7 @@
       <item>
        <widget class="QLineEdit" name="productId">
         <property name="text">
-         <string>0x0256</string>
+         <string>0x5b49</string>
         </property>
        </widget>
       </item>
@@ -67,7 +67,7 @@
       <item>
        <widget class="QLineEdit" name="reportId">
         <property name="text">
-         <string>0</string>
+         <string>5</string>
         </property>
        </widget>
       </item>
@@ -129,19 +129,6 @@
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QPushButton" name="transButton">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>开始</string>
-        </property>
-        <property name="autoDefault">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
      </layout>
     </item>
     <item>
@@ -160,6 +147,64 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QPushButton" name="transButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>开始</string>
+        </property>
+        <property name="autoDefault">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="outReportEdit"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="outReportLabel">
+        <property name="text">
+         <string>OUT Report</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QPushButton" name="sendButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Send</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0" alignment="Qt::AlignTop">
+       <widget class="QLabel" name="inReportLabel">
+        <property name="text">
+         <string>In Report</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QPlainTextEdit" name="inReportEdit">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2" alignment="Qt::AlignTop">
+       <widget class="QPushButton" name="clearButton">
+        <property name="text">
+         <string>clear</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
    </layout>
@@ -169,7 +214,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>444</width>
+     <width>505</width>
      <height>22</height>
     </rect>
    </property>

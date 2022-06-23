@@ -58,7 +58,7 @@ void FileTransmit::run()
     uint8_t recvBuffer[32];
     int recvLength = sizeof(recvBuffer);
     uint8_t* sendPtr = reportId ? (sendBuffer+1) : sendBuffer;
-    
+
     if(usbHid->transmitData(sendPtr, 32, recvBuffer, &recvLength, reportId) < 0)
     {
         goto trans_fail;
@@ -106,6 +106,7 @@ void FileTransmit::run()
 
 trans_fail:
     file->close();
+    usbHid->close();
     transmitStatus(fileCount >= fileSize);
     fileSize = 0;
     fileCount = 0;    

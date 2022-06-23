@@ -1,9 +1,11 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QString>
 #include <QFile>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QDebug>
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent), 
@@ -65,7 +67,10 @@ void MainWindow::on_connectButton_clicked(void)
     }
 
     if(errorTitle == nullptr)
+    {
         ui->devinfoLabel->setText((char *)inData+1);
+        ui->sendButton->setEnabled(true);
+    }
     else
     {
         QMessageBox::warning(this, u8"失败", u8"设备打开失败", u8"关闭");
@@ -95,6 +100,7 @@ void MainWindow::on_transButton_clicked(void)
         {
             transButtonStatus = true;
             ui->transButton->setText(u8"取消");
+            ui->sendButton->setEnabled(false);
         }
         else
         {
@@ -129,6 +135,55 @@ void MainWindow::transmitStatus(int status)
     ui->transProgress->setValue(0);
     transButtonStatus = false;
     ui->transButton->setText(u8"开始");
+    ui->devinfoLabel->setText(u8"未发现设备！");
+}
+
+void MainWindow::on_sendButton_clicked(void)
+{
+    uint8_t outData[32] = {0x00};
+    uint8_t inData[32];
+    int inLen = sizeof(inData);
+
+    if(!usbHid->isOpened())
+    {
+        QMessageBox::warning(this, u8"失败", u8"未连接设备！", u8"关闭");
+        return;
+    }
+    
+    QString outText = ui->outReportEdit->text();
+
+    qDebug() << outText;
+
+    outText.remove(QRegExp("\\s"));
+    QStringList outList = outText.split(",");
+    for(int i = 0; i < outList.size(); i++)
+    {
+        QString outStr = outList.at(i);
+        if(outStr.startsWith("0x") || outStr.startsWith("0X"))
+            outData[i] = outStr.toUShort(nullptr, 16);
+        else
+            outData[i] = outStr.toUShort(nullptr, 10);
+
+    }
+
+    if(usbHid->transmitData(outData, sizeof(outData), inData, &inLen, ui->reportId->text().toUShort(nullptr, 10)) < 0)
+    {
+        QMessageBox::warning(this, u8"失败", u8"数据发送失败！", u8"关闭");
+        return;
+    }
+
+    QString inText = "";
+    for(int i = 0; i < inLen - 1; i++)
+    {
+        inText += QString("%1,").arg(inData[i], 2, 16, QLatin1Char('0'));
+    }
+    inText += QString("%1").arg(inData[inLen-1], 2, 16, QLatin1Char('0'));
+    ui->inReportEdit->appendPlainText(inText);
+}
+
+void MainWindow::on_clearButton_clicked(void)
+{
+    ui->inReportEdit->clear();
 }
 
 MainWindow::~MainWindow()

@@ -21,6 +21,8 @@ private slots:
     void on_connectButton_clicked(void);
     void on_fileBrowse_clicked(void);
     void on_transButton_clicked(void);
+    void on_sendButton_clicked(void);
+    void on_clearButton_clicked(void);
     void transmitStatus(int status);
     void transmitProgress(int progress);
 
