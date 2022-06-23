@@ -91,7 +91,7 @@ void MainWindow::on_transButton_clicked(void)
         qDebug() << "start";
 
         fileTransmit->setFileName(ui->filePath->text());
-        if(fileTransmit->startTransmit(usbHid) == true)
+        if(fileTransmit->startTransmit(usbHid, ui->reportId->text().toUShort(nullptr, 10)) == true)
         {
             transButtonStatus = true;
             ui->transButton->setText(u8"取消");

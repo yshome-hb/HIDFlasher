@@ -54,11 +54,12 @@ FileTransmit::~FileTransmit()
 
 void FileTransmit::run()
 {
-    uint8_t sendBuffer[32] = {0xA5, 0x0B, 0x01, 0x09, 0x05, 0x04, 0x52, 0x28, 0x00, 0x01, 0xFF};
+    uint8_t sendBuffer[33] = {0xF0, 0x0B, 0x01, 0x09, 0x05, 0x04, 0x52, 0x28, 0x00, 0x01, 0xFF};
     uint8_t recvBuffer[32];
     int recvLength = sizeof(recvBuffer);
+    uint8_t* sendPtr = reportId ? (sendBuffer+1) : sendBuffer;
     
-    if(usbHid->transmitData(sendBuffer, sizeof(sendBuffer), recvBuffer, &recvLength) < 0)
+    if(usbHid->transmitData(sendPtr, 32, recvBuffer, &recvLength, reportId) < 0)
     {
         goto trans_fail;
     }
@@ -83,7 +84,7 @@ void FileTransmit::run()
         sendBuffer[28] = (data_crc >> 8) & 0xFF;
 
         recvLength = sizeof(recvBuffer);
-        if(usbHid->transmitData(sendBuffer, sizeof(sendBuffer), recvBuffer, &recvLength) < 0)
+        if(usbHid->transmitData(sendPtr, 32, recvBuffer, &recvLength, reportId) < 0)
         {
             goto trans_fail;
         }
@@ -101,10 +102,9 @@ void FileTransmit::run()
 
     memset(sendBuffer+9, 0xFF, 18);
     sendBuffer[9] = 0x02;
-    usbHid->transmitData(sendBuffer, sizeof(sendBuffer), recvBuffer, &recvLength);
+    usbHid->transmitData(sendPtr, 32, recvBuffer, &recvLength, reportId);
 
 trans_fail:
-    usbHid->close();
     file->close();
     transmitStatus(fileCount >= fileSize);
     fileSize = 0;
@@ -121,7 +121,7 @@ int FileTransmit::isTransmitting()
     return fileSize - fileCount;
 }
 
-bool FileTransmit::startTransmit(USBHIDDevice* hid)
+bool FileTransmit::startTransmit(USBHIDDevice* hid, uint8_t id)
 {
     if(hid == NULL)
         return false;
@@ -134,6 +134,7 @@ bool FileTransmit::startTransmit(USBHIDDevice* hid)
     fileSize = fileInfo.size();
     fileCount = 0;
     usbHid = hid;
+    reportId = id;
 
     this->start();
     //transmitTimer->start(TRANS_TIME_OUT);

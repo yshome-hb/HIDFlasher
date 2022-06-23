@@ -18,7 +18,7 @@ public:
     void setFileName(const QString &name);
 
     int isTransmitting();
-    bool startTransmit(USBHIDDevice* hid = NULL);
+    bool startTransmit(USBHIDDevice* hid = NULL, uint8_t id = 0);
     void stopTransmit();
 
 protected:
@@ -36,6 +36,7 @@ private:
     QTimer *transmitTimer;
     USBHIDDevice* usbHid;
 
+    uint8_t reportId;
     uint64_t fileSize;
     uint64_t fileCount;
 };
