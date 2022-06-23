@@ -42,10 +42,10 @@ public:
 
     void setParams(uint16_t vid = 0, uint16_t pid = 0, wchar_t* serial = NULL);
     void setUsage(uint16_t upage, uint16_t usage);
-    bool isConnected();
+    int isConnected();
     bool isOpened();
 
-    bool open();
+    bool open(int index = -1);
     void close();
     int write(uint8_t* data, uint16_t size, uint8_t reportId = 0);
     int read(uint8_t* data, uint16_t size, int timeout = -1);
@@ -61,7 +61,6 @@ private:
     hid_device* activeDevice = NULL;
     uint16_t _vid, _pid, _usagePage, _usage;
     wchar_t _serial[32] = {0};
-    char *_path;
 
     uint8_t outReportBuf[65];
     uint8_t inReportBuf[65];

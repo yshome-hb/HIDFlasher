@@ -104,6 +104,7 @@ void FileTransmit::run()
     usbHid->transmitData(sendBuffer, sizeof(sendBuffer), recvBuffer, &recvLength);
 
 trans_fail:
+    usbHid->close();
     file->close();
     transmitStatus(fileCount >= fileSize);
     fileSize = 0;

@@ -15,7 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     transButtonStatus = false;
 
-    usbHid->setUsage(0xFF60, 0x0061);
+    usbHid->setUsage(0, 0);
 
     connect(fileTransmit, SIGNAL(transmitProgress(int)), this, SLOT(transmitProgress(int)));
     connect(fileTransmit, SIGNAL(transmitStatus(int)), this, SLOT(transmitStatus(int)));
@@ -28,41 +28,49 @@ void MainWindow::on_connectButton_clicked(void)
 
     usbHid->setParams(ui->vendorId->text().toUShort(nullptr, 16), ui->productId->text().toUShort(nullptr, 16));
 
-    if(!usbHid->isConnected())
+    int device_num = usbHid->isConnected();
+    if(!device_num)
     {
         QMessageBox::warning(this, u8"失败", u8"未发现设备！", u8"关闭");
         ui->devinfoLabel->setText(u8"未发现设备！");
         return;
     }
 
-    if(!usbHid->open())
-    {
-        QMessageBox::warning(this, u8"失败", u8"设备打开失败", u8"关闭");
-        ui->devinfoLabel->setText(u8"未发现设备！");
-        return;        
-    }
-
-    uint8_t outData[32] = {0xA0};
+    uint8_t reportId = ui->reportId->text().toUShort(nullptr, 10);
+    uint8_t outData[32] = {0x00};
     uint8_t inData[32];
     int inLen = sizeof(inData);
-
-    if(usbHid->transmitData(outData, sizeof(outData), inData, &inLen) < 0)
+    QString errorTitle = u8"未发现设备！";
+    for(int i = 0; i < device_num; i++)
     {
-        usbHid->close();
-        QMessageBox::warning(this, u8"失败", u8"无法读取设备信息", u8"关闭");
-        ui->devinfoLabel->setText(u8"未发现设备！");
-        return;  
+        if(!usbHid->open(i))
+        {
+            continue;
+        }
+
+        if(usbHid->transmitData(outData, sizeof(outData), inData, &inLen, reportId) < 0)
+        {
+            usbHid->close();
+            continue;  
+        }
+
+        if(inLen != sizeof(inData) || inData[0] != reportId)
+        {
+            usbHid->close();
+            continue;  
+        }
+
+        errorTitle = nullptr;
+        break;
     }
 
-    if(inLen != sizeof(inData) || inData[0] != 0xA0)
+    if(errorTitle == nullptr)
+        ui->devinfoLabel->setText((char *)inData+1);
+    else
     {
-        usbHid->close();
-        QMessageBox::warning(this, u8"失败", u8"无法读取设备信息", u8"关闭");
-        ui->devinfoLabel->setText(u8"未发现设备！");
-        return;  
+        QMessageBox::warning(this, u8"失败", u8"设备打开失败", u8"关闭");
+        ui->devinfoLabel->setText(errorTitle);
     }
-
-    ui->devinfoLabel->setText((char *)inData+1);
 }
 
 void MainWindow::on_fileBrowse_clicked(void)

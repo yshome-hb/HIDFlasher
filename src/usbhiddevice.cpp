@@ -6,7 +6,6 @@ QList<USBHIDDevice::DevInfo> USBHIDDevice::devList;
 USBHIDDevice::USBHIDDevice(QObject* parent, uint16_t vid, uint16_t pid, wchar_t* serial) : QObject(parent)
 {
     hid_init();
-    _path = NULL;
     _vid = vid;
     _pid = pid;
     if (serial != NULL)
@@ -28,33 +27,22 @@ void USBHIDDevice::setUsage(uint16_t upage, uint16_t usage)
     _usage = usage;
 }
 
-bool USBHIDDevice::isConnected()
+int USBHIDDevice::isConnected()
 {
-    _path = NULL;
     if(!enumerate(_vid, _pid))
-        return false;
-
-    if(_usagePage == 0 && _usage == 0)
-    {
-        USBHIDDevice::DevInfo devInfo = devList.at(0);
-        _path = devInfo.path.toUtf8().data();;
-        return true;
-    }
+        return 0;
 
     for(int i = 0; i < devList.size(); i++)
     {
         USBHIDDevice::DevInfo devInfo = devList.at(i);
-        if(_usagePage > 0 && _usagePage != devInfo.usagePage)
-            continue;
-
-        if(_usage > 0 && _usage != devInfo.usage)
-            continue;   
-
-        _path = devInfo.path.toUtf8().data();;
-        break;
+        if((_usagePage > 0 && _usagePage != devInfo.usagePage)
+         ||(_usage > 0 && _usage != devInfo.usage))
+        {
+            devList.removeAt(i);
+        }
     }
 
-    return true;
+    return devList.size();
 }
 
 bool USBHIDDevice::isOpened()
@@ -62,14 +50,19 @@ bool USBHIDDevice::isOpened()
     return activeDevice != NULL;
 }
 
-bool USBHIDDevice::open()
+bool USBHIDDevice::open(int index)
 {
-    if(_path != NULL)
-        activeDevice = hid_open_path(_path);
-    else if(wcslen(_serial) > 0)
-        activeDevice = hid_open(_vid, _pid, _serial);
+    if(index < 0)
+    {
+        if(wcslen(_serial) > 0)
+            activeDevice = hid_open(_vid, _pid, _serial);
+        else
+            activeDevice = hid_open(_vid, _pid, NULL);
+    }
     else
-        activeDevice = hid_open(_vid, _pid, NULL);
+    {
+        activeDevice = hid_open_path(devList.at(index).path.toUtf8().data());
+    }
 
     return activeDevice != NULL;
 }
