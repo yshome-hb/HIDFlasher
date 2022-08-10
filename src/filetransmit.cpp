@@ -92,6 +92,9 @@ void FileTransmit::run()
         // qDebug() << "recvLength "<<QString("0x%1").arg(recvLength);
         // QDebug_hex_dump(recvBuffer, 32);
 
+        if(recvBuffer[0] == 0)
+            memmove(recvBuffer, recvBuffer+1, 31);
+
         if(recvLength != sizeof(recvBuffer) || recvBuffer[2] != 0x01)
         {
             goto trans_fail;
